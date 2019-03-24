@@ -51,6 +51,7 @@ def extractPDB(pdbFile):
     return protein
 
 
+# Extracts the atoms in the protein, regardless of which residue they belong to
 def extractAtomCoords(protein):
     atoms = []
     for residue in protein:
@@ -60,6 +61,7 @@ def extractAtomCoords(protein):
     return atoms
 
 
+# Extracts all of the QM atoms given from the qmList
 def extractQMAtoms(protein, qmList):
 
     atoms = []
@@ -69,6 +71,8 @@ def extractQMAtoms(protein, qmList):
             atoms.append(atom)
     return atoms
 
+
+# Extracts all of the alpha carbons in the protein
 def extractAlphaCarbons(protein):
     atoms = []
     for residue in protein:
@@ -151,6 +155,7 @@ def rotate(protein1, protein2):
     return newProtein
 
 
+# Calculates the RMSF from the structures and time interval given, returns a list of data
 def calculateRMSF(structures, time):
     # find average position
 
@@ -244,17 +249,36 @@ def main():
     for index, protein in enumerate(proteins[1:]):
         proteins[index] = rotate(proteins[0], protein)
 
+
+    # Calculates the RMSF data
     # Time is in nanoseconds here (QM/DMD is a 20ns simulation)
+    # But we use total number of stuctures (1-40 here)
     allAtoms = []
     qmAtoms = []
     alphaCarbonsAtoms = []
-    for protein in proteins:
+    for protein in proteins[1:]:
         allAtoms.append(extractAtomCoords(protein))
         qmAtoms.append(extractQMAtoms(protein, qmList))
         alphaCarbonsAtoms.append(extractAlphaCarbons(protein))
+
     allAtomData = calculateRMSF(allAtoms, 40)
     qmAtomData = calculateRMSF(qmAtoms, 40)
     alphaCarbonData = calculateRMSF(alphaCarbonsAtoms, 40)
+
+    # Write-out the data
+    with open("RMSF_Data.csv", 'w') as f:
+        f.write("Atom\n")
+        for data in qmAtomData:
+            f.write(", " + str(data))
+
+        f.write("\n")
+        for data in alphaCarbonData:
+            f.write(", " + str(data))
+
+        f.write("\n")
+        for data in allAtomData:
+            f.write(", " + str(data))
+
 
 if __name__ == "__main__":
     main()
